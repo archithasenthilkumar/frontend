@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Roll Number</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+        }
+        .response {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Roll Number</h1>
+    <form id="jsonForm">
+        <input type="text" id="jsonInput" placeholder='Enter JSON (e.g., {"data": ["A", "C", "z"]})' required>
+        <button type="submit">Submit</button>
+        <div id="error" class="error"></div>
+    </form>
+
+    <div id="options" style="display: none;">
+        <h2>Select Options:</h2>
+        <label><input type="checkbox" value="Alphabets"> Alphabets</label><br>
+        <label><input type="checkbox" value="Numbers"> Numbers</label><br>
+        <label><input type="checkbox" value="Highest alphabet"> Highest alphabet</label><br>
+    </div>
+
+    <div id="response" class="response"></div>
+
+    <script>
+        document.getElementById('jsonForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('jsonInput').value;
+            const errorDiv = document.getElementById('error');
+            const responseDiv = document.getElementById('response');
+            const optionsDiv = document.getElementById('options');
+            errorDiv.textContent = '';
+            responseDiv.textContent = '';
+            let parsedInput;
+            try {
+                parsedInput = JSON.parse(input);
+            } catch (err) {
+                errorDiv.textContent = 'Invalid JSON format';
+                return;
+            }
+            try {
+                const res = await fetch('YOUR_API_ENDPOINT', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(parsedInput),
+                });
+
+                if (!res.ok) throw new Error('Network response was not ok');
+
+                const data = await res.json();
+                optionsDiv.style.display = 'block';
+                document.querySelectorAll('#options input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        const selectedOptions = Array.from(document.querySelectorAll('#options input[type="checkbox"]:checked'))
+                            .map(checkbox => checkbox.value);
+                        const filteredResponse = {};
+
+                        if (selectedOptions.includes('Alphabets')) {
+                            filteredResponse.alphabets = data.alphabets; 
+                        }
+                        if (selectedOptions.includes('Numbers')) {
+                            filteredResponse.numbers = data.numbers; 
+                        }
+                        if (selectedOptions.includes('Highest alphabet')) {
+                            filteredResponse.highestAlphabet = data.highestAlphabet; 
+                        }
+
+                        responseDiv.textContent = JSON.stringify(filteredResponse, null, 2);
+                    });
+                });
+            } catch (err) {
+                errorDiv.textContent = 'Error calling the API: ' + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
